@@ -10,11 +10,14 @@ body {
 }
 h1 {
   margin: 10px;
+  text-align: center;
 }
 canvas {
   background: #333;
   display: block;
   margin: 0 auto;
+  max-width: 100%;
+  height: auto;
 }
 .score-board {
   margin-top: 10px;
