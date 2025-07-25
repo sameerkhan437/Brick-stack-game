@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Box Collector Game</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #1e1e2e; }
+    canvas { display: block; margin: auto; background: linear-gradient(135deg, #a1c4fd, #c2e9fb); }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: none;
+    }
+    #startScreen, #gameOver {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 30px;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    #startBtn, #restartBtn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    #gameOver { display: none; }
+  </style>
+</head>
+<body>
+  <div id="score">Score: 0</div>
+
+  <div id="startScreen">
+    <p>Welcome to Box Collector!</p>
+    <button id="startBtn">Play</button>
+  </div>
+
+  <div id="gameOver">
+    <p>Game Over!</p>
+    <button id="restartBtn">Restart</button>
+  </div>
+
+  <canvas id="gameCanvas" width="500" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const scoreDisplay = document.getElementById("score");
+    const startScreen = document.getElementById("startScreen");
+    const gameOverScreen = document.getElementById("gameOver");
+    const startBtn = document.getElementById("startBtn");
+    const restartBtn = document.getElementById("restartBtn");
+
+    let player, coin, obstacles, score, gameRunning;
+    let keys = {};
+
+    document.addEventListener("keydown", (e) => keys[e.key] = true);
+    document.addEventListener("keyup", (e) => keys[e.key] = false);
+
+    function randomPosition(size) {
+      return Math.floor(Math.random() * (canvas.width - size));
+    }
+
+    function resetGame() {
+      player = { x: 50, y: 50, size: 30, color: "#ff4444", speed: 5 };
+      coin = { x: randomPosition(20), y: randomPosition(20), size: 15, color: "gold" };
+      obstacles = [
+        { x: 100, y: 100, size: 30, color: "#333", speedX: 3, speedY: 2 },
+        { x: 300, y: 200, size: 40, color: "#333", speedX: -2, speedY: 3 }
+      ];
+      score = 0;
+      scoreDisplay.textContent = "Score: " + score;
+      scoreDisplay.style.display = "block";
+      gameRunning = true;
+      startScreen.style.display = "none";
+      gameOverScreen.style.display = "none";
+    }
+
+    function update() {
+      if (!gameRunning) return;
+
+      if (keys["ArrowUp"]) player.y -= player.speed;
+      if (keys["ArrowDown"]) player.y += player.speed;
+      if (keys["ArrowLeft"]) player.x -= player.speed;
+      if (keys["ArrowRight"]) player.x += player.speed;
+
+      player.x = Math.max(0, Math.min(canvas.width - player.size, player.x));
+      player.y = Math.max(0, Math.min(canvas.height - player.size, player.y));
+
+      if (
+        player.x < coin.x + coin.size &&
+        player.x + player.size > coin.x &&
+        player.y < coin.y + coin.size &&
+        player.y + player.size > coin.y
+      ) {
+        score++;
+        scoreDisplay.textContent = "Score: " + score;
+        coin.x = randomPosition(coin.size);
+        coin.y = randomPosition(coin.size);
+      }
+
+      obstacles.forEach(obs => {
+        obs.x += obs.speedX;
+        obs.y += obs.speedY;
+
+        if (obs.x <= 0 || obs.x + obs.size >= canvas.width) obs.speedX *= -1;
+        if (obs.y <= 0 || obs.y + obs.size >= canvas.height) obs.speedY *= -1;
+
+        if (
+          player.x < obs.x + obs.size &&
+          player.x + player.size > obs.x &&
+          player.y < obs.y + obs.size &&
+          player.y + player.size > obs.y
+        ) {
+          gameOver();
+        }
+      });
+    }
+
+    function drawCircle(obj) {
+      ctx.beginPath();
+      ctx.arc(obj.x + obj.size / 2, obj.y + obj.size / 2, obj.size / 2, 0, Math.PI * 2);
+      ctx.fillStyle = obj.color;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawCircle(player);
+      drawCircle(coin);
+      obstacles.forEach(obs => {
+        ctx.fillStyle = obs.color;
+        ctx.fillRect(obs.x, obs.y, obs.size, obs.size);
+      });
+    }
+
+    function gameOver() {
+      gameRunning = false;
+      gameOverScreen.style.display = "block";
+    }
+
+    function gameLoop() {
+      update();
+      draw();
+      requestAnimationFrame(gameLoop);
+    }
+
+    startBtn.addEventListener("click", resetGame);
+    restartBtn.addEventListener("click", resetGame);
+
+    gameLoop();
+  </script>
+</body>
+</html>
